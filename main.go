@@ -8,6 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	apiRoot string = "/gamesdb"
+)
+
+const (
+	host     string = "api-gamesdb-db.mysql.database.azure.com"
+	database string = "gamesdb"
+	user     string = "sagnax@api-gamesdb-db"
+	password string = "a8FWYrLQW3mjW6B"
+)
+
 type Game struct {
 	ID          string  `json:"id"`
 	Title       string  `json:"title"`
@@ -23,6 +34,17 @@ type Game struct {
 
 // getGames responds with the list of all games as JSON
 func getGames(c *gin.Context) {
+	c.IndentedJSON(http.StatusOK, games)
+}
+
+// getGameByID responds with the data of the game which id matches the given id as JSON
+func getGameByID(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return
+	}
+	// query db for game with id
+	println(id)
 	c.IndentedJSON(http.StatusOK, games)
 }
 
@@ -49,8 +71,12 @@ var games = []Game{
 
 func main() {
 	router := gin.Default()
-	router.GET("/games", getGames)
-	router.POST("/games", postGames)
+
+	router.GET(apiRoot, getGames)
+	router.GET(apiRoot+"/allgames", getGames)
+	router.GET(apiRoot+"/:id", getGameByID)
+
+	router.POST(apiRoot+"/addgame", postGames)
 
 	router.Run("localhost:3000")
 }

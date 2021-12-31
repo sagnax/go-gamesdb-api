@@ -1,11 +1,13 @@
 package main
 
 import (
-	"math/rand"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -25,6 +27,7 @@ type Game struct {
 	Developer   string  `json:"developer"`
 	Publisher   string  `json:"publisher"`
 	Overview    string  `json:"overview"`
+	Genre       string  `json:"genre"`
 	Platform    string  `json:"platform"`
 	ReleaseDate string  `json:"releaseDate"`
 	AddedDate   string  `json:"addedDate"`
@@ -34,49 +37,234 @@ type Game struct {
 
 // getGames responds with the list of all games as JSON
 func getGames(c *gin.Context) {
+	var games = []Game{}
+	var game = Game{}
+	rows, err := db.Query("SELECT * FROM games;")
+	checkError(err)
+	defer rows.Close()
+	//fmt.Println("Reading data:")
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+		//fmt.Println(game)
+		games = append(games, game)
+	}
+
+	c.IndentedJSON(http.StatusOK, games)
+}
+
+// getGameByTitle responds with the game matching the title given as JSON
+func getGameByTitle(c *gin.Context) {
+	var game = Game{}
+	title := c.Param("title")
+
+	rows, err := db.Query("SELECT * FROM games WHERE title = ?;", title)
+	checkError(err)
+	defer rows.Close()
+	//fmt.Println("Reading data:")
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+		//fmt.Println(game)
+	}
+
+	c.IndentedJSON(http.StatusOK, game)
+}
+
+// getGamesByTitle responds with a list of games that contains the title given as JSON
+func getGamesByTitle(c *gin.Context) {
+	var games = []Game{}
+	var game = Game{}
+	title := c.Param("title")
+
+	query := "SELECT * FROM games WHERE title LIKE '%" + title + "%';"
+	rows, err := db.Query(query)
+	checkError(err)
+	defer rows.Close()
+	//fmt.Println("Reading data:")
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+		//fmt.Println(game)
+		games = append(games, game)
+	}
+
 	c.IndentedJSON(http.StatusOK, games)
 }
 
 // getGameByID responds with the data of the game which id matches the given id as JSON
 func getGameByID(c *gin.Context) {
+	var game = Game{}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return
 	}
-	// query db for game with id
-	println(id)
+	//println(id)
+
+	rows, err := db.Query("SELECT * FROM games WHERE id = ?;", id)
+	checkError(err)
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+	}
+
+	c.IndentedJSON(http.StatusOK, game)
+}
+
+// getGamesByPlatform responds with the list of all games matching given platform as JSON
+func getGamesByPlatform(c *gin.Context) {
+	var games = []Game{}
+	var game = Game{}
+	platform := c.Param("platform")
+	if platform == "" {
+		return
+	}
+	//println(platform)
+
+	query := "SELECT * FROM games WHERE platform LIKE '%" + platform + "%';"
+
+	rows, err := db.Query(query)
+	checkError(err)
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+		games = append(games, game)
+	}
+
 	c.IndentedJSON(http.StatusOK, games)
 }
 
-// postGames adds a game from JSON received in the request body
-func postGames(c *gin.Context) {
-	var newGame Game
+// getGamesByGenre responds with the list of all games matching given genre as JSON
+func getGamesByGenre(c *gin.Context) {
+	var games = []Game{}
+	var game = Game{}
+	genre := c.Param("genre")
+	if genre == "" {
+		return
+	}
+	//println(genre)
+
+	query := "SELECT * FROM games WHERE genre LIKE '%" + genre + "%';"
+
+	rows, err := db.Query(query)
+	checkError(err)
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Publisher, &game.Overview, &game.Genre, &game.Platform, &game.ReleaseDate, &game.AddedDate, &game.Price, &game.Cover)
+		checkError(err)
+		games = append(games, game)
+	}
+
+	c.IndentedJSON(http.StatusOK, games)
+}
+
+// addGame adds a game from JSON received in the request body
+func addGame(c *gin.Context) {
+	newGame := Game{}
 
 	// call BindJSON to bind the received JSON to newGame
-	if err := c.BindJSON(&newGame); err != nil {
+	err := c.BindJSON(&newGame)
+	checkError(err)
+
+	// these are not allowed to be null
+	if newGame.Title == "" || newGame.Developer == "" || newGame.AddedDate == "" {
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	// Add the new game to the slice
-	games = append(games, newGame)
+	//query := "INSERT INTO games (title, developer, publisher, overview, genre, platform, releaseDate, addedDate, price, cover) VALUES  ("Dishonored 2", "Arkane Studios", "Bethesda Softworks", "Reprise your role as a supernatural assassin in Dishonored 2. Declared a “masterpiece” by Eurogamer and hailed “a must-play revenge tale” by Game Informer, Dishonored 2 is the follow up to Arkane’s 1st-person action blockbuster & winner of 100+ 'Game of the Year' awards, Dishonored.", "Action, Adventure", "Steam", "11 Nov, 2016", "28 Dec, 2021", 89.99, "https://cdn.akamai.steamstatic.com/steam/apps/403640/header.jpg?t=1603889340")"
+	res, err := db.Exec("INSERT INTO games (title, developer, publisher, overview, genre, platform, releaseDate, addedDate, price, cover) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", newGame.Title, newGame.Developer, newGame.Publisher, newGame.Overview, newGame.Genre, newGame.Platform, newGame.ReleaseDate, newGame.AddedDate, newGame.Price, newGame.Cover)
+	checkError(err)
+	rows, err := res.RowsAffected()
+	checkError(err)
+	fmt.Printf("Insert affected %d rows\n", rows)
+
 	c.IndentedJSON(http.StatusCreated, newGame)
 }
 
-var games = []Game{
-	{strconv.Itoa(rand.Int()), "Back 4 Blood", "Turtle Rock Studios", "Warner Bros. Games", "Back 4 Blood is a thrilling cooperative first-person shooter from the creators of the critically acclaimed Left 4 Dead franchise. Experience the intense 4 player co-op narrative campaign, competitive multiplayer as human or Ridden, and frenetic gameplay that keeps you in the action.", "Steam", "12 Oct, 2021", "28 Dec, 2021", 279.99, "https://cdn.akamai.steamstatic.com/steam/apps/924970/header.jpg?t=1639522452"},
-	{strconv.Itoa(rand.Int()), "Ghostrunner", "One More Level, 3D Realms, Slipgate Ironworks™, All in! Games", "505 Games", "Ghostrunner offers a unique single-player experience: fast-paced, violent combat, and an original setting that blends science fiction with post-apocalyptic themes. It tells the story of a world that has already ended and its inhabitants who fight to survive.", "Steam", "27 Oct, 2020", "28 Dec, 2021", 99.99, "https://cdn.akamai.steamstatic.com/steam/apps/1139900/header.jpg?t=1635496307"},
-	{strconv.Itoa(rand.Int()), "Hollow Knight", "Team Cherry", "Team Cherry", "Forge your own path in Hollow Knight! An epic action adventure through a vast ruined kingdom of insects and heroes. Explore twisting caverns, battle tainted creatures and befriend bizarre bugs, all in a classic, hand-drawn 2D style.", "Steam", "24 Feb, 2017", "28 Dec, 2021", 27.99, "https://cdn.akamai.steamstatic.com/steam/apps/367520/header.jpg?t=1625363925"},
-	{strconv.Itoa(rand.Int()), "Death's Door", "Acid Nerve", "Devolver Digital", "Reaping souls of the dead and punching a clock might get monotonous but it's honest work for a Crow. The job gets lively when your assigned soul is stolen and you must track down a desperate thief to a realm untouched by death - where creatures grow far past their expiry.", "Steam", "20 Jul, 2021", "28 Dec, 2021", 49.95, "https://cdn.akamai.steamstatic.com/steam/apps/894020/header.jpg?t=1629235525"},
+func updateGame(c *gin.Context) {
+	updatedGame := Game{}
+	id := c.Param("id")
+	if id == "" {
+		return
+	}
+
+	// call BindJSON to bind the received JSON to newGame
+	err := c.BindJSON(&updatedGame)
+	checkError(err)
+
+	// these are not allowed to be null
+	if updatedGame.Title == "" || updatedGame.Developer == "" || updatedGame.AddedDate == "" {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	res, err := db.Exec("UPDATE games SET games.title=?, games.developer=?, games.publisher=?, overview=?, games.genre=?, games.platform=?, games.releaseDate=?, games.addedDate=?, games.price=?, games.cover=? WHERE id = ?;", updatedGame.Title, updatedGame.Developer, updatedGame.Publisher, updatedGame.Overview, updatedGame.Genre, updatedGame.Platform, updatedGame.ReleaseDate, updatedGame.AddedDate, updatedGame.Price, updatedGame.Cover, id)
+	checkError(err)
+	rows, err := res.RowsAffected()
+	checkError(err)
+	fmt.Printf("Update affected %d rows\n", rows)
+
+	c.Status(http.StatusOK)
+
 }
 
+func deleteGame(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		return
+	}
+
+	res, err := db.Exec("DELETE FROM games WHERE id = ?;", id)
+	checkError(err)
+	rows, err := res.RowsAffected()
+	checkError(err)
+	fmt.Printf("Delete affected %d rows\n", rows)
+
+	c.Status(http.StatusOK)
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("error occured: " + err.Error())
+		panic(err)
+	}
+}
+
+var (
+	db  *sql.DB
+	err error
+)
+
 func main() {
+
+	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?allowNativePasswords=true&tls=true", user, password, host, database)
+
+	db, err = sql.Open("mysql", connectionString)
+	checkError(err)
+	defer db.Close()
+
+	err = db.Ping()
+	checkError(err)
+	fmt.Println("Ping database successfully.")
+
 	router := gin.Default()
 
 	router.GET(apiRoot, getGames)
-	router.GET(apiRoot+"/allgames", getGames)
-	router.GET(apiRoot+"/:id", getGameByID)
+	router.GET(apiRoot+"/id/:id", getGameByID)
+	router.GET(apiRoot+"/title/:title", getGameByTitle)
+	router.GET(apiRoot+"/search/:title", getGamesByTitle)
+	router.GET(apiRoot+"/platform/:platform", getGamesByPlatform)
+	router.GET(apiRoot+"/genre/:genre", getGamesByGenre)
 
-	router.POST(apiRoot+"/addgame", postGames)
+	router.POST(apiRoot+"/add", addGame)
+	router.GET(apiRoot+"/delete/:id", deleteGame)
+	router.POST(apiRoot+"/update/:id", updateGame)
 
 	router.Run("localhost:3000")
 }

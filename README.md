@@ -12,9 +12,7 @@ A RESTful API for a Game Database Written with **Go (Golang)**, **Gin Web Framew
 - "/gamesdb/platform/:platform" GET - returns a list with all the games from the given platform
 - "/gamesdb/genre/:genre" GET - returns a list with all the games matching the given genre
 
-- "/gamesdb/add" POST - Adds a game to the database
-
-<br>  
+- "/gamesdb/add" POST - Adds a game to the database<br>
 Example data:
 
 ```json
@@ -34,9 +32,8 @@ Example data:
 
 - "/gamesdb/delete/:id" GET - deletes the game with the given id from the database
 
-- "/gamesdb/update/:id" POST - update the game with the given id in the database
-
-<br>Example data:
+- "/gamesdb/update/:id" POST - update the game with the given id in the database<br>
+Example data:
 
 ```json
 {

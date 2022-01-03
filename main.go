@@ -11,10 +11,6 @@ import (
 )
 
 const (
-	apiRoot string = "/gamesdb"
-)
-
-const (
 	host     string = "api-gamesdb-db.mysql.database.azure.com"
 	database string = "gamesdb"
 	user     string = "sagnax@api-gamesdb-db"
@@ -241,6 +237,8 @@ var (
 	err error
 )
 
+const apiRoot string = "/gamesdb/api"
+
 func main() {
 
 	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?allowNativePasswords=true&tls=true", user, password, host, database)
@@ -256,6 +254,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET(apiRoot, getGames)
+	router.GET(apiRoot+"/", getGames)
 	router.GET(apiRoot+"/id/:id", getGameByID)
 	router.GET(apiRoot+"/title/:title", getGameByTitle)
 	router.GET(apiRoot+"/search/:title", getGamesByTitle)

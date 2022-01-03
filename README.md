@@ -5,14 +5,14 @@ A RESTful API for a Game Database Written with **Go (Golang)**, **Gin Web Framew
 
 ### Endpoints:
 
-- "/gamesdb" GET - returns a list with all the games
-- "/gamesdb/id/:id" GET - returns a list with the game matching the given id
-- "/gamesdb/title/:title" GET - returns a list with the game matching the given title
-- "/gamesdb/search/:title" GET - returns a list with all the games containing the given title
-- "/gamesdb/platform/:platform" GET - returns a list with all the games from the given platform
-- "/gamesdb/genre/:genre" GET - returns a list with all the games matching the given genre
+- "/gamesdb/api" GET - returns a list with all the games
+- "/gamesdb/api/id/:id" GET - returns a list with the game matching the given id
+- "/gamesdb/api/title/:title" GET - returns a list with the game matching the given title
+- "/gamesdb/api/search/:title" GET - returns a list with all the games containing the given title
+- "/gamesdb/api/platform/:platform" GET - returns a list with all the games from the given platform
+- "/gamesdb/api/genre/:genre" GET - returns a list with all the games matching the given genre
 
-- "/gamesdb/add" POST - Adds a game to the database<br>
+- "/gamesdb/api/add" POST - Adds a game to the database<br>
 Example data:
 
 ```json
@@ -30,9 +30,9 @@ Example data:
 }
 ```
 
-- "/gamesdb/delete/:id" GET - deletes the game with the given id from the database
+- "/gamesdb/api/delete/:id" GET - deletes the game with the given id from the database
 
-- "/gamesdb/update/:id" POST - update the game with the given id in the database<br>
+- "/gamesdb/api/update/:id" POST - update the game with the given id in the database<br>
 Example data:
 
 ```json

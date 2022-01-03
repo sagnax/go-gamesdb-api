@@ -265,5 +265,5 @@ func main() {
 	router.GET(apiRoot+"/delete/:id", deleteGame)
 	router.POST(apiRoot+"/update/:id", updateGame)
 
-	router.Run("168.138.145.85:3000")
+	router.Run(":3000")
 }

@@ -3,7 +3,7 @@
 
 A RESTful API for a Game Database Written with ***Go (Golang)***, ***Gin Web Framework*** and using ***Microsoft Azure DB*** as the database.
 
-This is also hosted on a ***Oracle Cloud server***, using ***Docker*** container.
+This is also hosted on a ***Oracle Cloud server***, using a ***Docker*** container.<br>
 http://168.138.145.85:3000/gamesdb/api
 
 ---
